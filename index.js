@@ -99,7 +99,6 @@ async function handleJob(job) {
   const itemData = await postgres.getItemData(
     job.getRemainingLinks().map((e) => e.link)
   );
-
   for (let item of itemData) {
     const link = job.getLink(item.a);
 
@@ -131,7 +130,7 @@ async function handleJob(job) {
   ) {
     return job.setResponseRemaining(errors.MaxQueueSize);
   }
-
+  
   if (job.remainingSize() > 0) {
     queue.addJob(job, CONFIG.bot_settings.max_attempts);
   }
@@ -270,7 +269,7 @@ queue.process(CONFIG.logins.length, botController, async (job) => {
   // Save and remove the delay attribute
   let delay = itemData.delay;
   delete itemData.delay;
-  
+
   // add the item info to the DB
   await postgres.insertItemData(itemData.iteminfo, job.data.price);
 

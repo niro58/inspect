@@ -105,7 +105,6 @@ async function handleJob(job) {
     if (!item.price && link.price) {
       postgres.updateItemPrice(item.a, link.price);
     }
-
     gameData.addAdditionalItemProperties(item);
     item = utils.removeNullValues(item);
 
@@ -130,7 +129,7 @@ async function handleJob(job) {
   ) {
     return job.setResponseRemaining(errors.MaxQueueSize);
   }
-  
+
   if (job.remainingSize() > 0) {
     queue.addJob(job, CONFIG.bot_settings.max_attempts);
   }
@@ -147,17 +146,30 @@ function canSubmitPrice(key, link, price) {
 }
 
 app.use(function (req, res, next) {
-  if (CONFIG.allowed_origins.length > 0 && req.get("origin") != undefined) {
-    // check to see if its a valid domain
+  const origin = req.get("origin");
+
+  if (CONFIG.allowed_origins.length > 0 && origin) {
+    // Validate if the origin is allowed
     const allowed =
-      CONFIG.allowed_origins.indexOf(req.get("origin")) > -1 ||
-      allowedRegexOrigins.findIndex((reg) => reg.test(req.get("origin"))) > -1;
+      CONFIG.allowed_origins.includes(origin) ||
+      allowedRegexOrigins.some((reg) => reg.test(origin));
 
     if (allowed) {
-      res.header("Access-Control-Allow-Origin", req.get("origin"));
-      res.header("Access-Control-Allow-Methods", "GET");
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+      res.header("Access-Control-Allow-Credentials", "true");
+    } else {
+      winston.warn(`Blocked request from ${origin}`);
     }
   }
+
+  // Handle preflight request
+  if (req.method === "OPTIONS") {
+    res.status(204).send();
+    return;
+  }
+
   next();
 });
 

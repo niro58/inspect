@@ -1,20 +1,13 @@
-FROM node:18.15
+FROM node:22-alpine
 
-# Create app directory
 WORKDIR /usr/src/csgofloat
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
 COPY package*.json ./
+RUN npm install --production
 
-RUN npm install
-
-# Bundle app source
 COPY . .
 
-EXPOSE 80
-EXPOSE 443
+EXPOSE 8080
 VOLUME /config
 
-CMD [ "/bin/bash", "docker_start.sh" ]
+CMD [ "/bin/sh", "docker_start.sh" ]

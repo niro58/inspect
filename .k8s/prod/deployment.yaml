@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inspect
+  namespace: personal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inspect
+  template:
+    metadata:
+      labels:
+        app: inspect
+    spec:
+      containers:
+        - name: inspect
+          image: ghcr.io/niro58/inspect:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /stats
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /stats
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          volumeMounts:
+            - name: config
+              mountPath: /config/config.js
+              subPath: config.js
+            - name: steam-data
+              mountPath: /config/steam_data
+      volumes:
+        - name: config
+          secret:
+            secretName: inspect-config
+        - name: steam-data
+          persistentVolumeClaim:
+            claimName: inspect-steam-data
